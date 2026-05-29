@@ -1,6 +1,5 @@
 from sqlalchemy import Boolean, create_engine, Column, Integer, String, DateTime, ForeignKey, Numeric, Index, UniqueConstraint 
-from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy_utils import ChoiceType
+from sqlalchemy.orm import declarative_base
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -15,7 +14,7 @@ db_path = database_dir / 'banco_exemplo.db'
 # Cria a engine
 engine = create_engine(
     f'sqlite:///{db_path}',
-    connect_args={'check_same_thread': False}  # Importante para SQLite
+    connect_args={'check_same_thread': False}
 )
 
 db = engine.connect()
@@ -29,13 +28,12 @@ class User(Base):
     name = Column("name", String(100), nullable=False)
     password_hash = Column("password_hash", String(255), nullable=False)
     email = Column("email", String(254), unique=True, nullable=False)
-    created_at = Column("created_at", DateTime,default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column("created_at", DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
 
-    def __init__(self, name, password_hash, email, created_at):
+    def __init__(self, name, password_hash, email):
         self.name = name
         self.password_hash = password_hash
         self.email = email
-        self.created_at = created_at
 
 class Stock(Base):
     __tablename__ = 'stocks'
@@ -59,9 +57,8 @@ class Portfolio(Base):
     id_user = Column("id_user", ForeignKey("users.id_user"), nullable=False)
     created_at = Column("created_at", DateTime,default=lambda: datetime.now(timezone.utc), nullable=False)
 
-    def __init__(self, id_user, created_at):
+    def __init__(self, id_user):
         self.id_user = id_user
-        self.created_at = created_at
 
 class PortfolioStock(Base):
     __tablename__ = 'portfolio_stocks'
@@ -96,7 +93,7 @@ class Prediction(Base):
     forecast_date = Column("forecast_date", DateTime,default=lambda: datetime.now(timezone.utc), nullable=False)
     target_date = Column("target_date", DateTime, nullable=False)
 
-    def __init__(self, id_stock, version_model, prob_lstm, prob_xgboost, prob_ensemble, final_forecast, confidence_score, forecast_date, target_date):
+    def __init__(self, id_stock, version_model, prob_lstm, prob_xgboost, prob_ensemble, final_forecast, confidence_score):
         self.id_stock = id_stock
         self.version_model = version_model
         self.prob_lstm = prob_lstm
@@ -104,8 +101,6 @@ class Prediction(Base):
         self.prob_ensemble = prob_ensemble
         self.final_forecast = final_forecast
         self.confidence_score = confidence_score
-        self.forecast_date = forecast_date
-        self.target_date = target_date
 
     __table_args__ = (
         Index("idx_stock_forecast_date", "id_stock", "forecast_date"),
@@ -124,7 +119,7 @@ class RealtimePrice(Base):
     percent_change = Column("percent_change", Numeric(15, 4), nullable=False)
     updated_at = Column("updated_at", DateTime, default=lambda: datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc), nullable=False)
 
-    def __init__(self, id_stock, current_price, open_price, price_high, price_low, volume, percent_change, updated_at):
+    def __init__(self, id_stock, current_price, open_price, price_high, price_low, volume, percent_change):
         self.id_stock = id_stock
         self.current_price = current_price
         self.open_price = open_price
@@ -132,7 +127,6 @@ class RealtimePrice(Base):
         self.price_low = price_low
         self.volume = volume
         self.percent_change = percent_change
-        self.updated_at = updated_at
 
 class PriceHistory(Base):
     __tablename__ = 'price_history'
