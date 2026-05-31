@@ -1,17 +1,28 @@
 from schemas.user import UserSchema
 from schemas.login import LoginSchema
-from fastapi import APIRouter, Depends, HTTPException
 from models.models import User
-from sqlalchemy.orm import Session
-from dependencies import get_session, get_password_hash, verify_password
+from dependencies import get_session, verify_token
+from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
+import bcrypt
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from passlib.context import CryptContext
+from jose import jwt, JWTError
+from datetime import datetime, timedelta, timezone
 
 auth = APIRouter(prefix="/auth", tags=["auth"])
 
 # ======== Funções auxiliares para autenticação ======== #
-def gerenate_token(user: User.id_user) -> int:
-    token = f"tgverfvirwjovo{user}"
-    return token
+
+def generate_token(user: User, token_duration=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)):
+    data_expire = datetime.now(timezone.utc) + token_duration
+    dic_info = {
+        "sub": user.id_user,
+        "exp": data_expire
+    }
+    jwt_encode = jwt.encode(dic_info, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt_encode
 
 def verify_user(email, password, session):
     user = session.query(User).filter(User.email == email).first()
@@ -19,8 +30,19 @@ def verify_user(email, password, session):
         return False
     elif not verify_password(password, user.password_hash):
         return False
-    return user
+    return user 
 
+def _truncate(password: str) -> str:
+    return password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
+
+def get_password_hash(password: str) -> str:
+    truncated = password.encode("utf-8")[:72]
+    hashed = bcrypt.hashpw(truncated, bcrypt.gensalt())
+    return hashed.decode("utf-8")
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    truncated = plain_password.encode("utf-8")[:72]
+    return bcrypt.checkpw(truncated, hashed_password.encode("utf-8"))
 
 # ========= Endpoints de autenticação ========= #
 @auth.post("/create")
@@ -43,11 +65,23 @@ async def create_user(usuario_schema: UserSchema, session: Session = Depends(get
 @auth.post("/login")
 async def login_user(login_schema: LoginSchema, session: Session = Depends(get_session)):
     """
-    
+    Endpoint para autenticar um usuário já existente e gerar um token JWT.
     """
     user = verify_user(login_schema.email, login_schema.password, session)
     if not user:
         raise HTTPException(status_code=400, detail="Invalid email or password")
     else:
-        access_token = gerenate_token(user)
-        return {"acess_token": access_token, "token_type": "Bearer"}
+        access_token = generate_token(user)
+        refresh_token = generate_token(user, token_duration = timedelta(days = 7) )
+        return {"access_token": access_token, 
+                "refresh_token": refresh_token, 
+                "token_type": "Bearer"}
+    
+@auth.get("/refresh")
+async def use_refresh_token(user: User = Depends(verify_token)): 
+    access_token = generate_token(user)
+
+    return {
+        "access_token": access_token, 
+        "token_type": "Bearer"
+    }
