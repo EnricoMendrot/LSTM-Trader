@@ -7,7 +7,7 @@ from passlib.context import CryptContext
 from jose import jwt, JWTError
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login-form")
 
 def get_session():
     Session = sessionmaker(bind=engine)
@@ -21,8 +21,7 @@ def get_session():
 def verify_token(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)):
     try:
         dic_info = jwt.decode(token, SECRET_KEY, ALGORITHM)
-        user_id = dic_info.get("sub")
-
+        user_id = int(dic_info.get("sub"))
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
     

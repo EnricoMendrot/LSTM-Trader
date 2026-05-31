@@ -6,8 +6,8 @@ from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
 from jose import jwt, JWTError
 from datetime import datetime, timedelta, timezone
 
@@ -18,7 +18,7 @@ auth = APIRouter(prefix="/auth", tags=["auth"])
 def generate_token(user: User, token_duration=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)):
     data_expire = datetime.now(timezone.utc) + token_duration
     dic_info = {
-        "sub": user.id_user,
+        "sub": str(user.id_user),
         "exp": data_expire
     }
     jwt_encode = jwt.encode(dic_info, SECRET_KEY, algorithm=ALGORITHM)
@@ -77,6 +77,21 @@ async def login_user(login_schema: LoginSchema, session: Session = Depends(get_s
                 "refresh_token": refresh_token, 
                 "token_type": "Bearer"}
     
+
+@auth.post("/login-form")
+async def login_form(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)):
+    """
+    Endpoint serve para efetuar o login de um usuário pelo botão de Authorize.
+    """
+    user = verify_user(form_data.username, form_data.password, session)
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid email or password")
+    else:
+        access_token = generate_token(user)
+        refresh_token = generate_token(user, token_duration = timedelta(days = 7) )
+        return {"access_token": access_token, 
+                "token_type": "Bearer"}
+            
 @auth.get("/refresh")
 async def use_refresh_token(user: User = Depends(verify_token)): 
     access_token = generate_token(user)
