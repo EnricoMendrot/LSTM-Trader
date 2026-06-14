@@ -25,8 +25,8 @@ def verify_token(token: str = Depends(oauth2_scheme), session: Session = Depends
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
     
-    usuario = session.query(User).filter(User.id_user == user_id).first()
-    if not usuario:
+    user = session.query(User).filter(User.id_user == user_id).first()
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    return usuario
+    return user
