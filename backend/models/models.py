@@ -9,8 +9,6 @@ database_dir.mkdir(exist_ok=True)
 
 db_path = database_dir / 'banco_exemplo.db'
 
-
-
 # Cria a engine
 engine = create_engine(
     f'sqlite:///{db_path}',
