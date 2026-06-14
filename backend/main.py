@@ -1,11 +1,9 @@
 from fastapi import FastAPI
-from backend.routes.login import login
-from backend.routes.register import register
+from routes.dasboard_realtime import dashboard
 
 app = FastAPI()
 
-app.include_router(login)
-app.include_router(register)
+app.include_router(dashboard)
 
 @app.get("/")
 async def root():
