@@ -28,5 +28,3 @@ async def get_stock_data(ticker: str, session: Session = Depends(get_session)) -
              "volume": t.volume}
             for t in price_history
     ]}
-      
-

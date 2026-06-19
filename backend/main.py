@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routes.dashboard_realtime import dashboard
+from routes.dashboard import dashboard
 
 app = FastAPI()
 
