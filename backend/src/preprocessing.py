@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from dependencies import get_session
 from models.models import PriceHistory
 from fastapi import Depends
@@ -67,6 +66,14 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
 
     df["volatility"] = df["Close"].pct_change().rolling(20).std()
 
+    df['EMA_9_rel']  = df['Close'] / df['EMA_9'] - 1
+    df['EMA_21_rel'] = df['Close'] / df['EMA_21'] - 1
+    df['EMA_50_rel'] = df['Close'] / df['EMA_50'] - 1
+
+    df['Open_rel']  = df['Open']  / df['Close'] - 1
+    df['High_rel']  = df['High']  / df['Close'] - 1
+    df['Low_rel']   = df['Low']   / df['Close'] - 1
+    
     df["bull_market"] = (
         df["EMA_21"] > df["EMA_50"]
     ).astype(int)
