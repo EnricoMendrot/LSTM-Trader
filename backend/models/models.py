@@ -1,5 +1,5 @@
 from sqlalchemy import Boolean, create_engine, Column, Integer, String, DateTime, ForeignKey, Numeric, Index, UniqueConstraint 
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -9,9 +9,6 @@ database_dir.mkdir(exist_ok=True)
 
 db_path = database_dir / 'banco_exemplo.db'
 
-
-
-# Cria a engine
 engine = create_engine(
     f'sqlite:///{db_path}',
     connect_args={'check_same_thread': False}
@@ -134,13 +131,52 @@ class PriceHistory(Base):
     id_hist = Column("id_hist", Integer, primary_key=True, autoincrement=True)
     id_stock = Column("id_stock", ForeignKey("stocks.id_stock"), nullable=False)
     recorded_at = Column("recorded_at", DateTime, nullable=False)
-    close = Column("close", Numeric(15, 4), nullable=False)
     open_price = Column("open_price", Numeric(15, 4), nullable=False)
     price_high = Column("price_high", Numeric(15, 4), nullable=False)
     price_low = Column("price_low", Numeric(15, 4), nullable=False)
+    close = Column("close", Numeric(15, 4), nullable=False)
     volume = Column("volume", Numeric(15, 4), nullable=False)
+    rsi = Column("rsi", Numeric(10, 4), nullable=True)
+    macd = Column("macd", Numeric(10, 4), nullable=True)
+    macd_signal = Column("macd_signal", Numeric(10, 4), nullable=True)
+    bb_upper = Column("bb_upper", Numeric(10, 4), nullable=True)
+    bb_lower = Column("bb_lower", Numeric(10, 4), nullable=True)
+    bb_position = Column("bb_position", Numeric(10, 4), nullable=True)
+    return_1 = Column("return_1", Numeric(10, 6), nullable=True)
+    return_5 = Column("return_5", Numeric(10, 6), nullable=True)
+    return_10 = Column("return_10", Numeric(10, 6), nullable=True)
+    ema_9 = Column("ema_9", Numeric(15, 4), nullable=True)
+    ema_21 = Column("ema_21", Numeric(15, 4), nullable=True)
+    ema_50 = Column("ema_50", Numeric(15, 4), nullable=True)
+    trend = Column("trend", Integer, nullable=True)
+    volatility = Column("volatility", Numeric(10, 6), nullable=True)
+    bull_market = Column("bull_market", Boolean, nullable=True)
 
-    def __init__(self, id_stock, recorded_at, open_price, price_high, price_low, close, volume):
+    def __init__(
+        self,
+        id_stock,
+        recorded_at,
+        open_price,
+        price_high,
+        price_low,
+        close,
+        volume,
+        rsi=None,
+        macd=None,
+        macd_signal=None,
+        bb_upper=None,
+        bb_lower=None,
+        bb_position=None,
+        return_1=None,
+        return_5=None,
+        return_10=None,
+        ema_9=None,
+        ema_21=None,
+        ema_50=None,
+        trend=None,
+        volatility=None,
+        bull_market=None
+    ):
         self.id_stock = id_stock
         self.recorded_at = recorded_at
         self.open_price = open_price
@@ -148,6 +184,21 @@ class PriceHistory(Base):
         self.price_low = price_low
         self.close = close
         self.volume = volume
+        self.rsi = rsi
+        self.macd = macd
+        self.macd_signal = macd_signal
+        self.bb_upper = bb_upper
+        self.bb_lower = bb_lower
+        self.bb_position = bb_position
+        self.return_1 = return_1
+        self.return_5 = return_5
+        self.return_10 = return_10
+        self.ema_9 = ema_9
+        self.ema_21 = ema_21
+        self.ema_50 = ema_50
+        self.trend = trend
+        self.volatility = volatility
+        self.bull_market = bull_market
     
     __table_args__ = (
         Index("idx_stock_recorded_at", "id_stock", "recorded_at"),
