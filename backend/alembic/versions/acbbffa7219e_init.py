@@ -1,8 +1,8 @@
-"""Initial Migration
+"""init
 
-Revision ID: e68beadd1368
+Revision ID: acbbffa7219e
 Revises: 
-Create Date: 2026-05-28 18:58:05.834871
+Create Date: 2026-06-27 10:21:56.230471
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e68beadd1368'
+revision: str = 'acbbffa7219e'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -35,7 +35,7 @@ def upgrade() -> None:
     sa.Column('name', sa.String(length=100), nullable=False),
     sa.Column('password_hash', sa.String(length=255), nullable=False),
     sa.Column('email', sa.String(length=254), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id_user'),
     sa.UniqueConstraint('email')
     )
@@ -65,11 +65,26 @@ def upgrade() -> None:
     sa.Column('id_hist', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('id_stock', sa.Integer(), nullable=False),
     sa.Column('recorded_at', sa.DateTime(), nullable=False),
-    sa.Column('close', sa.Numeric(precision=15, scale=4), nullable=False),
     sa.Column('open_price', sa.Numeric(precision=15, scale=4), nullable=False),
     sa.Column('price_high', sa.Numeric(precision=15, scale=4), nullable=False),
     sa.Column('price_low', sa.Numeric(precision=15, scale=4), nullable=False),
+    sa.Column('close', sa.Numeric(precision=15, scale=4), nullable=False),
     sa.Column('volume', sa.Numeric(precision=15, scale=4), nullable=False),
+    sa.Column('rsi', sa.Numeric(precision=10, scale=4), nullable=True),
+    sa.Column('macd', sa.Numeric(precision=10, scale=4), nullable=True),
+    sa.Column('macd_signal', sa.Numeric(precision=10, scale=4), nullable=True),
+    sa.Column('bb_upper', sa.Numeric(precision=10, scale=4), nullable=True),
+    sa.Column('bb_lower', sa.Numeric(precision=10, scale=4), nullable=True),
+    sa.Column('bb_position', sa.Numeric(precision=10, scale=4), nullable=True),
+    sa.Column('return_1', sa.Numeric(precision=10, scale=6), nullable=True),
+    sa.Column('return_5', sa.Numeric(precision=10, scale=6), nullable=True),
+    sa.Column('return_10', sa.Numeric(precision=10, scale=6), nullable=True),
+    sa.Column('ema_9', sa.Numeric(precision=15, scale=4), nullable=True),
+    sa.Column('ema_21', sa.Numeric(precision=15, scale=4), nullable=True),
+    sa.Column('ema_50', sa.Numeric(precision=15, scale=4), nullable=True),
+    sa.Column('trend', sa.Integer(), nullable=True),
+    sa.Column('volatility', sa.Numeric(precision=10, scale=6), nullable=True),
+    sa.Column('bull_market', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['id_stock'], ['stocks.id_stock'], ),
     sa.PrimaryKeyConstraint('id_hist')
     )
