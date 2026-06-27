@@ -154,6 +154,8 @@ class PriceHistory(Base):
     trend = Column("trend", Integer, nullable=True)
     volatility = Column("volatility", Numeric(10, 6), nullable=True)
     bull_market = Column("bull_market", Boolean, nullable=True)
+    spy_return = Column("spy_return", Numeric(10, 6), nullable=True)
+    vix_change = Column("vix_change", Numeric(10, 6), nullable=True)
 
     def __init__(
         self,
@@ -178,7 +180,9 @@ class PriceHistory(Base):
         ema_50=None,
         trend=None,
         volatility=None,
-        bull_market=None
+        bull_market=None,
+        spy_return=None,
+        vix_change=None
     ):
         self.id_stock = id_stock
         self.recorded_at = recorded_at
@@ -202,6 +206,12 @@ class PriceHistory(Base):
         self.trend = trend
         self.volatility = volatility
         self.bull_market = bull_market
+        self.spy_return = spy_return
+        self.vix_change = vix_change
+
+    __table_args__ = (
+        Index("idx_stock_recorded_at", "id_stock", "recorded_at"),
+    )
     
     __table_args__ = (
         Index("idx_stock_recorded_at", "id_stock", "recorded_at"),
