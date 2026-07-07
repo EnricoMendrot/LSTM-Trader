@@ -1,11 +1,10 @@
 from fastapi import FastAPI
-from backend.routes.login import login
-from backend.routes.register import register
+from routes.auth import auth
+
 
 app = FastAPI()
 
-app.include_router(login)
-app.include_router(register)
+app.include_router(auth)
 
 @app.get("/")
 async def root():
