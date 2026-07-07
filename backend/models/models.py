@@ -1,0 +1,230 @@
+from sqlalchemy import Boolean, create_engine, Column, Integer, String, DateTime, ForeignKey, Numeric, Index, UniqueConstraint 
+from sqlalchemy.orm import declarative_base, sessionmaker
+from datetime import datetime, timezone
+from pathlib import Path
+
+backend_dir = Path(__file__).parent.parent
+database_dir = backend_dir / 'database'
+database_dir.mkdir(exist_ok=True) 
+
+db_path = database_dir / 'banco_exemplo.db'
+
+engine = create_engine(
+    f'sqlite:///{db_path}',
+    connect_args={'check_same_thread': False}
+)
+
+db = engine.connect()
+
+Base = declarative_base()
+
+class User(Base):
+    __tablename__ = 'users'
+
+    id_user = Column("id_user", Integer, primary_key=True, autoincrement=True)
+    name = Column("name", String(100), nullable=False)
+    password_hash = Column("password_hash", String(255), nullable=False)
+    email = Column("email", String(254), unique=True, nullable=False)
+    created_at = Column("created_at", DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
+
+    def __init__(self, name, password_hash, email):
+        self.name = name
+        self.password_hash = password_hash
+        self.email = email
+
+class Stock(Base):
+    __tablename__ = 'stocks'
+
+    id_stock = Column("id_stock", Integer, primary_key=True, autoincrement=True)
+    ticker = Column("ticker", String(10), unique=True, nullable=False)
+    company_name = Column("company_name", String(100), nullable=False)
+    sector = Column("sector", String(100), nullable=False)
+    exchange = Column("exchange", String(100), nullable=False)
+
+    def __init__(self, ticker, company_name, sector, exchange):
+        self.ticker = ticker
+        self.company_name = company_name
+        self.sector = sector
+        self.exchange = exchange
+
+class Portfolio(Base):
+    __tablename__ = 'portfolios'
+
+    id_port = Column("id_port", Integer, primary_key=True, autoincrement=True)
+    id_user = Column("id_user", ForeignKey("users.id_user"), nullable=False)
+    created_at = Column("created_at", DateTime,default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    def __init__(self, id_user):
+        self.id_user = id_user
+
+class PortfolioStock(Base):
+    __tablename__ = 'portfolio_stocks'
+
+    id_port_stock = Column("id_port_stock", Integer, primary_key=True, autoincrement=True)
+    id_port = Column("id_port", ForeignKey("portfolios.id_port"), nullable=False)
+    id_stock = Column("id_stock", ForeignKey("stocks.id_stock"), nullable=False)
+    amount = Column("amount", Numeric(10, 4), nullable=False)
+    average_price = Column("average_price", Numeric(15, 4), nullable=False)
+
+    def __init__(self, id_port, id_stock, amount, average_price):
+        self.id_port = id_port
+        self.id_stock = id_stock
+        self.amount = amount
+        self.average_price = average_price
+    
+    __table_args__ = (
+        UniqueConstraint("id_stock", "id_port", name="uq_stock_port"),
+    )
+
+class Prediction(Base):
+    __tablename__ = 'predictions'
+
+    id_prev = Column("id_prev", Integer, primary_key=True, autoincrement=True)
+    id_stock = Column("id_stock", ForeignKey("stocks.id_stock"), nullable=False)
+    version_model = Column("version_model", String(100), nullable=False)
+    prob_lstm = Column("prob_lstm", Numeric(15, 4), nullable=False)
+    prob_xgboost = Column("prob_xgb", Numeric(15, 4), nullable=False)
+    prob_ensemble = Column("prob_ensemble", Numeric(15, 4), nullable=False)
+    final_forecast = Column("final_forecast", Numeric(15, 4), nullable=False)
+    confidence_score = Column("confidence_score", Numeric(15, 4), nullable=False)
+    forecast_date = Column("forecast_date", DateTime,default=lambda: datetime.now(timezone.utc), nullable=False)
+    target_date = Column("target_date", DateTime, nullable=False)
+
+    def __init__(self, id_stock, version_model, prob_lstm, prob_xgboost, prob_ensemble, final_forecast, confidence_score):
+        self.id_stock = id_stock
+        self.version_model = version_model
+        self.prob_lstm = prob_lstm
+        self.prob_xgboost = prob_xgboost
+        self.prob_ensemble = prob_ensemble
+        self.final_forecast = final_forecast
+        self.confidence_score = confidence_score
+
+    __table_args__ = (
+        Index("idx_stock_forecast_date", "id_stock", "forecast_date"),
+    )
+
+class RealtimePrice(Base):
+    __tablename__ = 'realtime_prices'
+
+    id_temp = Column("id_temp", Integer, primary_key=True, autoincrement=True)
+    id_stock = Column("id_stock", ForeignKey("stocks.id_stock"), nullable=False, unique=True)
+    current_price = Column("current_price", Numeric(15, 4), nullable=False)
+    open_price = Column("open_price", Numeric(15, 4), nullable=False)
+    price_high = Column("price_high", Numeric(15, 4), nullable=False)
+    price_low = Column("price_low", Numeric(15, 4), nullable=False)
+    volume = Column("volume", Numeric(15, 4), nullable=False)
+    percent_change = Column("percent_change", Numeric(15, 4), nullable=False)
+    updated_at = Column("updated_at", DateTime, default=lambda: datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc), nullable=False)
+
+    def __init__(self, id_stock, current_price, open_price, price_high, price_low, volume, percent_change):
+        self.id_stock = id_stock
+        self.current_price = current_price
+        self.open_price = open_price
+        self.price_high = price_high
+        self.price_low = price_low
+        self.volume = volume
+        self.percent_change = percent_change
+
+class PriceHistory(Base):
+    __tablename__ = 'price_history'
+
+    id_hist = Column("id_hist", Integer, primary_key=True, autoincrement=True)
+    id_stock = Column("id_stock", ForeignKey("stocks.id_stock"), nullable=False)
+    recorded_at = Column("recorded_at", DateTime, nullable=False)
+    open_price = Column("open_price", Numeric(15, 4), nullable=False)
+    price_high = Column("price_high", Numeric(15, 4), nullable=False)
+    price_low = Column("price_low", Numeric(15, 4), nullable=False)
+    close = Column("close", Numeric(15, 4), nullable=False)
+    volume = Column("volume", Numeric(15, 4), nullable=False)
+    rsi = Column("rsi", Numeric(10, 4), nullable=True)
+    macd = Column("macd", Numeric(10, 4), nullable=True)
+    macd_signal = Column("macd_signal", Numeric(10, 4), nullable=True)
+    bb_upper = Column("bb_upper", Numeric(10, 4), nullable=True)
+    bb_lower = Column("bb_lower", Numeric(10, 4), nullable=True)
+    bb_position = Column("bb_position", Numeric(10, 4), nullable=True)
+    return_1 = Column("return_1", Numeric(10, 6), nullable=True)
+    return_5 = Column("return_5", Numeric(10, 6), nullable=True)
+    return_10 = Column("return_10", Numeric(10, 6), nullable=True)
+    ema_9 = Column("ema_9", Numeric(15, 4), nullable=True)
+    ema_21 = Column("ema_21", Numeric(15, 4), nullable=True)
+    ema_50 = Column("ema_50", Numeric(15, 4), nullable=True)
+    trend = Column("trend", Integer, nullable=True)
+    volatility = Column("volatility", Numeric(10, 6), nullable=True)
+    bull_market = Column("bull_market", Boolean, nullable=True)
+    spy_return = Column("spy_return", Numeric(10, 6), nullable=True)
+    vix_change = Column("vix_change", Numeric(10, 6), nullable=True)
+
+    def __init__(
+        self,
+        id_stock,
+        recorded_at,
+        open_price,
+        price_high,
+        price_low,
+        close,
+        volume,
+        rsi=None,
+        macd=None,
+        macd_signal=None,
+        bb_upper=None,
+        bb_lower=None,
+        bb_position=None,
+        return_1=None,
+        return_5=None,
+        return_10=None,
+        ema_9=None,
+        ema_21=None,
+        ema_50=None,
+        trend=None,
+        volatility=None,
+        bull_market=None,
+        spy_return=None,
+        vix_change=None
+    ):
+        self.id_stock = id_stock
+        self.recorded_at = recorded_at
+        self.open_price = open_price
+        self.price_high = price_high
+        self.price_low = price_low
+        self.close = close
+        self.volume = volume
+        self.rsi = rsi
+        self.macd = macd
+        self.macd_signal = macd_signal
+        self.bb_upper = bb_upper
+        self.bb_lower = bb_lower
+        self.bb_position = bb_position
+        self.return_1 = return_1
+        self.return_5 = return_5
+        self.return_10 = return_10
+        self.ema_9 = ema_9
+        self.ema_21 = ema_21
+        self.ema_50 = ema_50
+        self.trend = trend
+        self.volatility = volatility
+        self.bull_market = bull_market
+        self.spy_return = spy_return
+        self.vix_change = vix_change
+
+    __table_args__ = (
+        Index("idx_stock_recorded_at", "id_stock", "recorded_at"),
+    )
+
+class Alert(Base):
+    __tablename__ = 'alerts'
+
+    id_alert = Column("id_alert", Integer, primary_key=True, autoincrement=True)
+    id_port = Column("id_port", ForeignKey("portfolios.id_port"), nullable=False)
+    id_prev = Column("id_prev", ForeignKey("predictions.id_prev"), nullable=False)
+    id_stock = Column("id_stock", ForeignKey("stocks.id_stock"), nullable=False)
+    alert_type = Column("alert_type", String(100), nullable=False)
+    threshold_value = Column("threshold_value", Numeric(15, 4), nullable=False)
+    is_active = Column("is_active", Boolean, nullable=False, default=False)
+
+    def __init__(self, id_port, id_prev, id_stock, alert_type, threshold_value, is_active):
+        self.id_port = id_port
+        self.id_prev = id_prev
+        self.id_stock = id_stock
+        self.alert_type = alert_type
+        self.threshold_value = threshold_value
+        self.is_active = is_active
