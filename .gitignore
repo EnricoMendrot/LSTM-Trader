@@ -1,0 +1,45 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Notebooks
+.ipynb_checkpoints
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Environment variables
+.env
+
+# Data and Models
+data/
+models/
+*.csv
+*.xlsx
+*.parquet
+*.db
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# Python formatting / linting cache
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+config.py
