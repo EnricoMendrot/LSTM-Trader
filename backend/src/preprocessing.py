@@ -1,8 +1,12 @@
 import pandas as pd
-from dependencies import get_session
-from models.models import PriceHistory
 from fastapi import Depends
 from sqlalchemy.orm import Session
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from models.models import PriceHistory
+from dependencies import get_session, get_session_context
 
 def agg(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -13,14 +17,14 @@ def agg(df: pd.DataFrame) -> pd.DataFrame:
     - Close: o último valor do dia
     - Volume: a soma do volume do dia
     """
-
+    print(df.columns.tolist())
     df = (
-    df.groupby(["ticker", "Date"]).agg({
-          "Open": "first",
-          "High": "max",
-          "Low": "min",
-          "Close": "last",
-          "Volume": "sum"
+    df.groupby(["id_stock", "recorded_at"]).agg({
+          "open_price": "first",
+          "price_high": "max",
+          "price_low": "min",
+          "close": "last",
+          "volume": "sum"
       })
       .reset_index()
     )
@@ -31,7 +35,7 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     Adiciona características ao DataFrame.
     """
     # RSI
-    delta = df["Close"].diff()
+    delta = df["close"].diff()
     gain = delta.clip(lower=0)
     loss = -delta.clip(upper=0)
     avg_gain = gain.ewm(alpha=1/14, adjust=False).mean()
@@ -41,45 +45,45 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     df["RSI"] = 100 - (100 / (1 + rs))
 
     # MACD
-    ema12 = df["Close"].ewm(span=12, adjust=False).mean()
-    ema26 = df["Close"].ewm(span=26, adjust=False).mean()
+    ema12 = df["close"].ewm(span=12, adjust=False).mean()
+    ema26 = df["close"].ewm(span=26, adjust=False).mean()
     df["MACD"] = ema12 - ema26
     df["MACD_signal"] = df["MACD"].ewm(span=9, adjust=False).mean()
 
     # Bollinger Bands
-    sma20 = df["Close"].rolling(20).mean()
-    std20 = df["Close"].rolling(20).std()
+    sma20 = df["close"].rolling(20).mean()
+    std20 = df["close"].rolling(20).std()
     df["BB_upper"] = sma20 + 2 * std20
     df["BB_lower"] = sma20 - 2 * std20
-    df["BB_position"] = (df["Close"] - df["BB_lower"]) / (df["BB_upper"] - df["BB_lower"])
+    df["BB_position"] = (df["close"] - df["BB_lower"]) / (df["BB_upper"] - df["BB_lower"])
 
     # Para colocar % - Diminui Ruído
-    df["return_1"] = df["Close"].pct_change(1)
-    df["return_5"] = df["Close"].pct_change(5)
-    df["return_10"] = df["Close"].pct_change(10)
+    df["return_1"] = df["close"].pct_change(1)
+    df["return_5"] = df["close"].pct_change(5)
+    df["return_10"] = df["close"].pct_change(10)
 
     # média dos preços, mas dando MAIS peso aos candles recentes.
-    df["EMA_9"] = df["Close"].ewm(span=9, adjust=False).mean()
-    df["EMA_21"] = df["Close"].ewm(span=21, adjust=False).mean()
-    df["EMA_50"] = df["Close"].ewm(span=50, adjust=False).mean()
+    df["EMA_9"] = df["close"].ewm(span=9, adjust=False).mean()
+    df["EMA_21"] = df["close"].ewm(span=21, adjust=False).mean()
+    df["EMA_50"] = df["close"].ewm(span=50, adjust=False).mean()
     df["trend"] = (df["EMA_9"] > df["EMA_21"]).astype(int)
 
-    df["volatility"] = df["Close"].pct_change().rolling(20).std()
+    df["volatility"] = df["close"].pct_change().rolling(20).std()
 
-    df['EMA_9_rel']  = df['Close'] / df['EMA_9'] - 1
-    df['EMA_21_rel'] = df['Close'] / df['EMA_21'] - 1
-    df['EMA_50_rel'] = df['Close'] / df['EMA_50'] - 1
+    df['EMA_9_rel']  = df['close'] / df['EMA_9'] - 1
+    df['EMA_21_rel'] = df['close'] / df['EMA_21'] - 1
+    df['EMA_50_rel'] = df['close'] / df['EMA_50'] - 1
 
-    df['Open_rel']  = df['Open']  / df['Close'] - 1
-    df['High_rel']  = df['High']  / df['Close'] - 1
-    df['Low_rel']   = df['Low']   / df['Close'] - 1
-    
+    df['Open_rel']  = df['open_price']  / df['close'] - 1
+    df['High_rel']  = df['price_high']  / df['close'] - 1
+    df['Low_rel']   = df['price_low']   / df['close'] - 1
+
     df["bull_market"] = (
         df["EMA_21"] > df["EMA_50"]
     ).astype(int)
 
     # Target (1 = subiu, 0 = caiu)
-    df["target"] = (df["Close"].shift(-1) > df["Close"]).astype(int)
+    df["target"] = (df["close"].shift(-1) > df["close"]).astype(int)
 
     return df
 
@@ -90,10 +94,16 @@ def run_preprocessing(session: Session = Depends(get_session)) -> pd.DataFrame:
     df = pd.read_sql_table(PriceHistory.__tablename__, session.bind)
     df = agg(df)
     df = (
-    df.sort_values(["ticker", "Date"])
-      .groupby("ticker", group_keys=False)
+    df.sort_values(["id_stock", "recorded_at"])
+      .groupby("id_stock", group_keys=False)
       .apply(add_features)
     )
-    df =df.dropna().drop_duplicates()
-
+    df = df.dropna().drop_duplicates()
+        
     return df
+
+if __name__ == "__main__":
+    with get_session_context() as session:
+        df = run_preprocessing(session)
+        os.makedirs("data", exist_ok=True)
+        df.to_csv(os.path.join("data", "processed_data.csv"), index=False)
