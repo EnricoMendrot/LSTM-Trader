@@ -5,7 +5,6 @@ import os
 import xgboost as xgb
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from tensorflow.keras.layers import LSTM, Dropout, Dense, BatchNormalization
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
@@ -16,17 +15,18 @@ from sklearn.metrics import accuracy_score, roc_auc_score, classification_report
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FEATURES_PATH = ['']
-FILE_PATH = os.path.join(BASE_DIR, 'data', 'train.csv')
+FILE_PATH = os.path.join(BASE_DIR, 'data', 'processed_data.csv')
 
 def split():
-    column_drop = ["Date", 'Close', 'ticker']
+    df = pd.read_csv(FILE_PATH)
+    column_drop = ["recorded_at", 'close', 'id_stock', 'target']
     lookback= 60
 
     X_trains, X_vals, X_tests = [], [], []
     y_trains, y_vals, y_tests = [], [], []
 
-    for ticker in df['ticker'].unique():
-        df_t = df[df['ticker'] == ticker].copy()
+    for ticker in df['id_stock'].unique():
+        df_t = df[df['id_stock'] == ticker].copy()
 
         # Remove último dia de cada ticker (NaN do shift(-1))
         df_t = df_t.iloc[:-1]
@@ -69,6 +69,24 @@ def split():
     y_val_lstm   = np.array(y_vals)
     y_test_lstm  = np.array(y_tests)
 
+
+    return [X_train_lstm, X_val_lstm, X_test_lstm, y_train_lstm, y_val_lstm, y_test_lstm]
+def callbacks():
+    early_stop = EarlyStopping(
+        monitor='val_loss',
+        patience=10,
+        restore_best_weights=True,
+    )
+
+    reduce_lr = ReduceLROnPlateau(
+        monitor="val_loss",
+        factor=0.5,
+        patience=3,
+        min_lr=0.00001,
+        verbose=1
+    )
+
+    return [early_stop, reduce_lr]
 def lstm_train():
     pass
 
@@ -76,4 +94,7 @@ def xgb_train():
     pass
 
 def train():
+    pass
+
+def save_model():
     pass
