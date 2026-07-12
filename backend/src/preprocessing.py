@@ -34,6 +34,8 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     Adiciona características ao DataFrame.
     """
+    print("Dentro do add_features:", df.columns.tolist())
+
     # RSI
     delta = df["close"].diff()
     gain = delta.clip(lower=0)
@@ -93,11 +95,15 @@ def run_preprocessing(session: Session = Depends(get_session)) -> pd.DataFrame:
     """
     df = pd.read_sql_table(PriceHistory.__tablename__, session.bind)
     df = agg(df)
-    df = (
-    df.sort_values(["id_stock", "recorded_at"])
-      .groupby("id_stock", group_keys=False)
-      .apply(add_features)
-    )
+    
+    df = df.sort_values(["id_stock", "recorded_at"])
+
+    grupos_processados = []
+    for id_stock, grupo in df.groupby("id_stock"):
+        grupo = add_features(grupo)
+        grupos_processados.append(grupo)
+
+    df = pd.concat(grupos_processados)
     df = df.dropna().drop_duplicates()
         
     return df
