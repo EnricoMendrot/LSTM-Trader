@@ -4,6 +4,9 @@ import joblib
 import xgboost as xgb
 import numpy as np
 import pandas as pd
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3" 
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 from tensorflow.keras.layers import LSTM, Dropout, Dense, BatchNormalization
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
@@ -28,7 +31,7 @@ depth          = 4
 
 def load_data():
      df = pd.read_csv(FILE_PATH)
-     column_drop = ["recorded_at", 'close', 'id_stock', 'target']
+     column_drop = ["recorded_at", 'id_stock', 'target']
      return [df, column_drop]
 
 def split(df, column_drop):
@@ -188,14 +191,11 @@ def save_model(modelo_lstm, modelo_xgb, df, scalers):
     # Salva o Ensemble
     ensemble_config = {
         "lookback": lookback,
-        "threshold": 0.4,
-        "peso_lstm": 0.7,
-        "peso_xgb": 0.3,
-        "features": list(df.drop(columns=['recorded_at', 'id_stock', 'target', 'close']).columns),
-        "tickers": list(df['id_stock'].unique()),
-        "data_treino": "2010-2021",
-        "data_val": "2022-2023",
-        "data_teste": "2023-2024"
+        "threshold": 0.45,
+        "peso_lstm": 0.5,
+        "peso_xgb": 0.5,
+        "features": list(df.drop(columns=['recorded_at', 'id_stock']).columns),
+        "tickers": list(df['id_stock'].unique())
     }
 
     save_ensemble = joblib.dump(ensemble_config, os.path.join(MODELS_DIR, "ensemble_config.pkl"))
@@ -208,15 +208,15 @@ def predict(lstm_model_trained, xgb_model_trained, X_test_lstm):
 
     # XGBoost no teste
     prob_xgb_test  = xgb_model_trained.predict_proba(X_test_xgb)[:, 1]
-    pred_xgb_test  = (prob_xgb_test > 0.7).astype(int)
+    pred_xgb_test  = (prob_xgb_test > 0.35).astype(int)
 
     # LSTM no teste
     prob_lstm_test = lstm_model_trained.predict(X_test_lstm).flatten()
-    pred_lstm_test = (prob_lstm_test > 0.3).astype(int)
+    pred_lstm_test = (prob_lstm_test > 0.4).astype(int)
 
     # Ensemble
     prob_final_test = (prob_lstm_test + prob_xgb_test) / 2
-    pred_final_test = (prob_final_test > 0.4).astype(int)
+    pred_final_test = (prob_final_test > 0.35).astype(int)
 
     return[prob_final_test, pred_final_test, prob_lstm_test, pred_lstm_test, prob_xgb_test, pred_xgb_test]
 
