@@ -4,6 +4,8 @@ import joblib
 import xgboost as xgb
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3" 
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
@@ -14,7 +16,6 @@ from tensorflow.keras.optimizers import Adam
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import roc_auc_score, classification_report
-
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FILE_PATH = os.path.join(BASE_DIR, '..', 'data', 'processed_data.csv')
@@ -220,6 +221,47 @@ def predict(lstm_model_trained, xgb_model_trained, X_test_lstm):
 
     return[prob_final_test, pred_final_test, prob_lstm_test, pred_lstm_test, prob_xgb_test, pred_xgb_test]
 
+def grafico(pred_lstm_test, prob_lstm_test, pred_xgb_test, prob_xgb_test, pred_final_test, prob_final_test):
+    resultados = {
+    "LSTM": {"y_pred": pred_lstm_test, "y_prob": prob_lstm_test},
+    "XGBoost": {"y_pred": pred_xgb_test, "y_prob": prob_xgb_test},
+    "Ensemble": {"y_pred": pred_final_test, "y_prob": prob_final_test},
+    }
+
+    linhas = []
+    for modelo, dados in resultados.items():
+        report = classification_report(y_test_lstm, dados["y_pred"], output_dict=True)
+        auc = roc_auc_score(y_test_lstm, dados["y_prob"])
+
+        linhas.append({"Modelo": modelo, "Métrica": "Precision", "Valor": report["1"]["precision"]})
+        linhas.append({"Modelo": modelo, "Métrica": "Recall", "Valor": report["1"]["recall"]})
+        linhas.append({"Modelo": modelo, "Métrica": "F1-Score", "Valor": report["1"]["f1-score"]})
+        linhas.append({"Modelo": modelo, "Métrica": "ROC-AUC", "Valor": auc})
+
+    df_metrics = pd.DataFrame(linhas)
+
+    sns.set_style("whitegrid")
+
+    plt.figure(figsize=(10, 6))
+    ax = sns.barplot(data=df_metrics, x="Métrica", y="Valor", hue="Modelo",
+                    palette="viridis")
+
+    for container in ax.containers:
+        ax.bar_label(container, fmt="%.2f", padding=3, fontsize=9, fontweight="bold")
+
+    plt.title("Comparação de Métricas entre Modelos", fontsize=14, fontweight="bold")
+    plt.ylabel("Valor", fontsize=11)
+    plt.xlabel("Métrica", fontsize=11)
+    plt.ylim(0, 1.05)
+    plt.legend(title="Modelo", frameon=True)
+    sns.despine(left=True)
+    plt.tight_layout()
+
+    os.makedirs("reports", exist_ok=True)
+    plt.savefig("reports/metrics_comparison.png", dpi=300, bbox_inches="tight")
+    plt.show()
+
+
 def train(df, X_train_lstm, X_val_lstm, y_train_lstm, y_val_lstm, scalers):
     lstm_model_trained, lstm_history = lstm_train(X_train_lstm, X_val_lstm, y_train_lstm, y_val_lstm)
     xgb_model_trained = xgb_train(X_train_lstm, X_val_lstm, y_train_lstm, y_val_lstm)
@@ -233,6 +275,7 @@ if __name__ == "__main__":
     X_train_lstm, X_val_lstm, X_test_lstm, y_train_lstm, y_val_lstm, y_test_lstm, scalers = split(df, column_drop)
     lstm_model_trained, xgb_model_trained, model_save = train(df, X_train_lstm, X_val_lstm, y_train_lstm, y_val_lstm, scalers)
     prob_final_test, pred_final_test, prob_lstm_test, pred_lstm_test, prob_xgb_test, pred_xgb_test = predict(lstm_model_trained, xgb_model_trained, X_test_lstm)
+    grafico(pred_lstm_test, prob_lstm_test, pred_xgb_test, prob_xgb_test, pred_final_test, prob_final_test)
     
     print(" # ========================== LSTM ========================== #")
     print(classification_report(y_test_lstm, pred_lstm_test))
