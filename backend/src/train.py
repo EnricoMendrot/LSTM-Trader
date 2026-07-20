@@ -260,8 +260,7 @@ def grafico(pred_lstm_test, prob_lstm_test, pred_xgb_test, prob_xgb_test, pred_f
     os.makedirs("reports", exist_ok=True)
     plt.savefig("reports/metrics_comparison.png", dpi=300, bbox_inches="tight")
     plt.show()
-
-
+        
 def train(df, X_train_lstm, X_val_lstm, y_train_lstm, y_val_lstm, scalers):
     lstm_model_trained, lstm_history = lstm_train(X_train_lstm, X_val_lstm, y_train_lstm, y_val_lstm)
     xgb_model_trained = xgb_train(X_train_lstm, X_val_lstm, y_train_lstm, y_val_lstm)
