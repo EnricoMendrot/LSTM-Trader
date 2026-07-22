@@ -42,7 +42,6 @@ def create_sequences(X, y, lookback=60):
             X_seq.append(X[i-lookback:i])
             y_seq.append(y[i])
 
-    print(f"Created sequences with shape: {np.array(X_seq).shape}")
     return np.array(X_seq), np.array(y_seq)
 
 def prepare_data(data, scalers):

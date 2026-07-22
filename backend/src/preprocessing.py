@@ -1,6 +1,7 @@
 import pandas as pd
 from fastapi import Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 import os
 import sys
 import numpy as np
@@ -10,13 +11,18 @@ from dependencies import get_session, get_session_context
 
 def agg(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Função de agregar os dados diariamente, utilizando as seguintes regras:
-    - Open: o primeiro valor do dia
-    - High: o valor máximo do dia
-    - Low: o valor mínimo do dia
-    - Close: o último valor do dia
-    - Volume: a soma do volume do dia
+    Agrega dados intradiários em candles diários por ticker.
+
+    Args:
+        df: DataFrame com colunas ['id_stock', 'recorded_at', 'open_price',
+            'price_high', 'price_low', 'close', 'volume', 'spy_return',
+            'vix_change'].
+
+    Returns:
+        DataFrame agregado por (id_stock, recorded_at), com open=primeiro,
+        high=máximo, low=mínimo, close=último e volume=soma do dia.
     """
+    
     df = (
     df.groupby(["id_stock", "recorded_at"]).agg({
         "open_price": "first",
@@ -100,11 +106,17 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-def run_preprocessing(session: Session = Depends(get_session)) -> pd.DataFrame:
+def run_preprocessing(session: Session = Depends(get_session), id_stock: str | None = None) -> pd.DataFrame:
     """
-    Executa o processo de pré-processamento dos dados.
+    Executa o processo de pré-processamento dos dados, podendo ser de uma ação específico ou não.
+
+    Retorna um `dataframe` com os dados processados.
     """
-    df = pd.read_sql_table(PriceHistory.__tablename__, session.bind)
+    query = select(PriceHistory)
+    if id_stock:
+        query = query.where(PriceHistory.id_stock == id_stock)
+    df = pd.read_sql(query, session.bind)
+    
     df = agg(df)
     
     df = df.sort_values(["id_stock", "recorded_at"])

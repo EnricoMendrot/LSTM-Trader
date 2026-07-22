@@ -32,5 +32,3 @@ async def load_models(app: FastAPI):
 
     # Shutdown: modelos e scalers serão coletados pelo GC ao final do processo
     del lstm, xgb, ensemble, scalers
-
-app = FastAPI(lifespan=load_models)
