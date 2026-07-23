@@ -1,6 +1,9 @@
-from backend.services.model_loader import load_models
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from services.model_loader import load_models
 from fastapi import FastAPI
-from backend.routes.predict import predict as predict_router
+from routes.predict import predict as predict_router
 
 app = FastAPI(lifespan=load_models)
 
