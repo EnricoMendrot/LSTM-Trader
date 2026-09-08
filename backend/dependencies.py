@@ -1,5 +1,5 @@
 from sqlalchemy.orm import sessionmaker
-from models.models import engine
+from contextlib import contextmanager
 from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
@@ -31,3 +31,16 @@ def verify_token(token: str = Depends(oauth2_scheme), session: Session = Depends
         raise HTTPException(status_code=404, detail="User not found")
     
     return user 
+
+@contextmanager
+def get_session_context():
+    '''
+    Serve para o FastAPI Dependency Injection, permitindo que a sessão do banco de dados seja injetada em rotas ou funções que precisam dela
+    '''
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    try:
+        yield session
+    finally:
+        session.close()
+

@@ -1,5 +1,5 @@
 from sqlalchemy import Boolean, create_engine, Column, Integer, String, DateTime, ForeignKey, Numeric, Index, UniqueConstraint 
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import declarative_base
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -90,7 +90,7 @@ class Prediction(Base):
     forecast_date = Column("forecast_date", DateTime,default=lambda: datetime.now(timezone.utc), nullable=False)
     target_date = Column("target_date", DateTime, nullable=False)
 
-    def __init__(self, id_stock, version_model, prob_lstm, prob_xgboost, prob_ensemble, final_forecast, confidence_score):
+    def __init__(self, id_stock, version_model, prob_lstm, prob_xgboost, prob_ensemble, final_forecast, confidence_score, target_date):
         self.id_stock = id_stock
         self.version_model = version_model
         self.prob_lstm = prob_lstm
@@ -98,6 +98,7 @@ class Prediction(Base):
         self.prob_ensemble = prob_ensemble
         self.final_forecast = final_forecast
         self.confidence_score = confidence_score
+        self.target_date = target_date
 
     __table_args__ = (
         Index("idx_stock_forecast_date", "id_stock", "forecast_date"),
@@ -209,6 +210,7 @@ class PriceHistory(Base):
     __table_args__ = (
         Index("idx_stock_recorded_at", "id_stock", "recorded_at"),
     )
+    
 
 class Alert(Base):
     __tablename__ = 'alerts'
