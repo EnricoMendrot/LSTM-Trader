@@ -68,5 +68,3 @@ async def create_prediction(request: Request, id_stock: int, session=Depends(get
     session.refresh(prediction)
 
     return PredictResponse(id_stock=id_stock, **result)
-
-   
