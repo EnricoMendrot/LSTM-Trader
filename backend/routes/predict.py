@@ -2,15 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from dependencies import get_session
-from models.models import Prediction, Stock
+from dependencies import get_session, verify_token
+from models.models import Prediction, Stock, User
 from services.predict_service import predict_model
 from schemas.predict import PredictResponse
 
 predict = APIRouter(prefix="/predict", tags=["predict"])
 
 @predict.post("/{id_stock}", response_model=PredictResponse)
-async def create_prediction(request: Request, id_stock: int, session=Depends(get_session)) -> PredictResponse:
+async def create_prediction(request: Request, id_stock: int, session=Depends(get_session), user: User = Depends(verify_token)) -> PredictResponse:
     """
     Função responsável por retornar um json com os dados da previsão.
 

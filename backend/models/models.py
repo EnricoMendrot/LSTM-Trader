@@ -211,7 +211,6 @@ class PriceHistory(Base):
         Index("idx_stock_recorded_at", "id_stock", "recorded_at"),
     )
     
-
 class Alert(Base):
     __tablename__ = 'alerts'
 
