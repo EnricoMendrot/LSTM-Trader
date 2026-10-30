@@ -1,0 +1,38 @@
+name: lstm-trader
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: ./backend/.env
+        required: false
+    volumes:
+      # banco SQLite: na primeira subida o volume é preenchido com o banco_exemplo.db da imagem
+      - db:/app/backend/database
+      # modelos treinados (gerados pelo entrypoint se ainda não existirem)
+      - models:/app/model/models
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      # o primeiro start inclui o treino dos modelos
+      start_period: 15m
+    restart: unless-stopped
+
+  frontend:
+    image: nginx:1.27-alpine
+    # porta 5500: é a origem liberada no CORS do backend/main.py
+    ports:
+      - "5500:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  db:
+  models:
