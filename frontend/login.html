@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar · LSTM-Trader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <style>
+    .auth { min-height: 100vh; display: flex; flex-wrap: wrap; }
+    .auth-art { flex: 1 1 520px; min-width: 0; position: relative; overflow: hidden; border-right: 1px solid var(--line); padding: clamp(24px, 4vw, 56px); display: flex; flex-direction: column; justify-content: space-between; gap: 48px; min-height: 520px; }
+    .auth-art > *:not(svg) { position: relative; z-index: 1; }
+    .auth-art svg.lines { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .auth-art h1 { font-size: clamp(44px, 6vw, 84px); line-height: .92; letter-spacing: -0.04em; }
+    .auth-art p { font-size: 18px; line-height: 1.55; color: var(--text-2); max-width: 520px; }
+    .ln { stroke-dasharray: 1; stroke-dashoffset: 1; animation: ln 6s cubic-bezier(.5, 0, .2, 1) infinite; }
+    @keyframes ln { 0% { stroke-dashoffset: 1; opacity: 1; } 55% { stroke-dashoffset: 0; opacity: 1; } 85% { opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+    .auth-form-wrap { flex: 1 1 440px; min-width: 0; display: grid; place-items: center; padding: clamp(24px, 4vw, 56px); }
+    .auth-box { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 28px; }
+    .seg { flex: 1; font-size: 15px; font-weight: 600; cursor: pointer; background: transparent; border: 0; color: var(--muted); min-height: 44px; padding: 0 18px; border-radius: 999px; transition: color .2s, background .2s; }
+    .seg:hover { color: var(--text); }
+    .seg[aria-selected="true"] { background: var(--text); color: var(--bg); }
+    .auth-box form { display: flex; flex-direction: column; gap: 18px; }
+    .auth-meta { border-top: 1px solid var(--line); padding-top: 18px; display: flex; flex-direction: column; gap: 8px; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--muted); }
+    .ok { border-color: var(--up); }
+  </style>
+</head>
+<body>
+  <main class="auth">
+    <section class="auth-art">
+      <a class="brand" href="index.html">
+        <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="7" fill="none" stroke="#ECE8DD" stroke-width="1.6"/><polyline points="6,20 11,14 15,17 22,8" fill="none" stroke="#B9F18C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="8" r="2.4" fill="#B9F18C"/></svg>
+        <span>LSTM—TRADER</span>
+      </a>
+      <svg class="lines" viewBox="0 0 600 400" preserveAspectRatio="none" aria-hidden="true" id="lines"></svg>
+      <div class="reveal" style="display:flex;flex-direction:column;gap:20px">
+        <h1 class="display">Cinco ações.<br>Duas IAs.<br>Uma aposta por dia.</h1>
+        <p>Entre para gerar previsões. A consulta de histórico é aberta; rodar os modelos exige login.</p>
+      </div>
+    </section>
+
+    <section class="auth-form-wrap">
+      <div class="auth-box reveal d1">
+        <div class="segmented" role="tablist" aria-label="Acesso" style="gap:4px;padding:4px">
+          <button class="seg" role="tab" type="button" data-mode="login" aria-selected="true">Entrar</button>
+          <button class="seg" role="tab" type="button" data-mode="create" aria-selected="false">Criar conta</button>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <h2 class="display" style="font-size:34px;letter-spacing:-0.03em" id="title">Bem-vindo de volta</h2>
+          <p class="muted" style="font-size:15px" id="sub">Use o e-mail e a senha cadastrados.</p>
+        </div>
+
+        <form id="form" novalidate>
+          <div class="field" id="name-field" hidden>
+            <label for="name">Nome</label>
+            <input id="name" name="name" type="text" autocomplete="name" placeholder="Como devemos te chamar">
+          </div>
+          <div class="field">
+            <label for="email">E-mail</label>
+            <input id="email" name="email" type="email" autocomplete="email" placeholder="voce@email.com" required>
+          </div>
+          <div class="field">
+            <label for="password">Senha</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required minlength="6">
+          </div>
+          <div id="msg" aria-live="polite"></div>
+          <button class="btn btn-solid btn-block" type="submit" id="submit">Entrar</button>
+        </form>
+
+        <div class="auth-meta">
+          <span id="route">POST /auth/login</span>
+          <span id="route-note">access_token válido por 30 min · refresh_token por 7 dias (GET /auth/refresh).</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="assets/js/pages/login.js"></script>
+</body>
+</html>
