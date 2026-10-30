@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Previsões · LSTM-Trader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main class="container page" style="padding-top:40px">
+    <div class="page-head">
+      <div class="titles">
+        <p class="eyebrow" id="target-line">Alvo · próximo pregão</p>
+        <h1 class="display">Onde os modelos concordam</h1>
+      </div>
+      <div id="run-slot"></div>
+    </div>
+
+    <div id="alert"></div>
+
+    <div class="stat-grid" id="summary"></div>
+
+    <section class="panel dumbbell-panel" aria-label="Comparação entre LSTM, XGBoost e ensemble">
+      <div class="dumbbell-top">
+        <div class="legend">
+          <span><span class="sw" style="background:var(--lstm)"></span>LSTM</span>
+          <span><span class="sw" style="background:var(--xgb)"></span>XGBoost</span>
+          <span><span style="width:10px;height:10px;transform:rotate(45deg);background:var(--text)"></span>ensemble</span>
+          <span>distância entre os pontos = discordância</span>
+        </div>
+        <div class="segmented" role="group" aria-label="Ordenar" id="sorts"></div>
+      </div>
+      <div class="db-grid db-axis">
+        <span></span>
+        <div class="scale"><span>0.0 baixa</span><span>0.5</span><span>alta 1.0</span></div>
+        <span style="text-align:right">confiança</span>
+      </div>
+      <div id="dumbbell"></div>
+    </section>
+
+    <section class="panel table-panel">
+      <div class="table-head">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <h2>Histórico de previsões</h2>
+          <span class="mono muted" style="font-size:12px">respostas do POST /predict feitas neste navegador</span>
+        </div>
+        <div class="segmented" role="group" aria-label="Filtrar por ação" id="filters"></div>
+      </div>
+      <div class="table-wrap">
+        <table class="table" style="min-width:860px">
+          <thead><tr>
+            <th scope="col">Executada em</th><th scope="col" class="left">Alvo</th><th scope="col" class="left">Ação</th>
+            <th scope="col">LSTM</th><th scope="col">XGB</th><th scope="col">Final</th><th scope="col">Confiança</th><th scope="col">Direção</th>
+          </tr></thead>
+          <tbody id="hist"></tbody>
+        </table>
+      </div>
+      <p class="mono faint" style="font-size:12px;padding:16px 24px;border-top:1px solid var(--line-2)">O backend grava todas as previsões na tabela <code>predictions</code>; quando existir uma rota de listagem (ex.: GET /predict/history), esta tabela pode ler direto dela.</p>
+    </section>
+  </main>
+
+  <script type="module" src="assets/js/pages/previsoes.js"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gráficos · LSTM-Trader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/app.css?v=3">
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main class="container page">
+    <div class="ticker-tabs" role="tablist" aria-label="Ações" id="tabs"></div>
+
+    <div class="layout">
+      <section class="panel chart-panel reveal" aria-labelledby="stock-title">
+        <div class="chart-head">
+          <div class="quote">
+            <span class="muted" id="stock-name" style="font-size:15px">&nbsp;</span>
+            <div class="quote-line">
+              <h1 class="wide quote-tk" id="stock-title">—</h1>
+              <span class="mono quote-px" id="last-close"></span>
+              <span class="mono" id="last-chg" style="font-size:16px"></span>
+            </div>
+          </div>
+          <div class="controls">
+            <div class="segmented" role="group" aria-label="Período" id="ranges"></div>
+            <div class="segmented" role="group" aria-label="Tipo de gráfico" id="modes"></div>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span><span style="width:16px;height:2px;background:var(--text)"></span>fechamento</span>
+          <span id="legend-proj" hidden><span style="width:16px;border-top:2px dashed var(--up)" id="legend-proj-sw"></span><span id="legend-proj-txt">previsão D+1</span></span>
+          <span><span style="width:16px;height:8px;background:var(--line-3);border-radius:2px"></span>volume</span>
+        </div>
+
+        <div id="chart"><div class="skeleton" style="aspect-ratio:960/400"></div></div>
+
+        <div class="stat-grid" id="kpis"></div>
+        <p class="mono faint" style="font-size:12px" id="src"></p>
+      </section>
+
+      <aside class="side reveal d1">
+        <section class="panel predict-card" id="predict" aria-live="polite"></section>
+        <section class="panel help">
+          <h2>Como ler</h2>
+          <p>Acima de 50% o ensemble aposta em alta. A confiança cai quando LSTM e XGBoost discordam, mesmo que a média pareça forte.</p>
+          <a href="previsoes.html">Comparar as cinco ações →</a>
+        </section>
+      </aside>
+    </div>
+
+    <section class="panel table-panel">
+      <div class="table-head">
+        <h2 id="table-title">Últimos pregões</h2>
+        <span class="mono muted" style="font-size:12px">recorded_at · open · high · low · close · volume</span>
+      </div>
+      <div class="table-wrap">
+        <table class="table" style="min-width:640px">
+          <thead><tr><th scope="col">Data</th><th scope="col">Abertura</th><th scope="col">Máxima</th><th scope="col">Mínima</th><th scope="col">Fechamento</th><th scope="col">Volume</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="assets/js/pages/grafico.js?v=3"></script>
+</body>
+</html>
