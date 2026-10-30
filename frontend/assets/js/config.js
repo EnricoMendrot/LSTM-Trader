@@ -1,6 +1,8 @@
 // Endereço da API FastAPI. Rode o backend com:
 //   cd backend && uvicorn main:app --reload
-export const API_BASE = 'http://127.0.0.1:8000';
+// Usa o mesmo host em que a página foi aberta (localhost, IP da rede etc.),
+// assim funciona também quando o site é acessado de outro computador.
+export const API_BASE = `${location.protocol}//${location.hostname || '127.0.0.1'}:8000`;
 
 // ids da tabela `stocks` (ordem do scripts/seed_history.py)
 export const STOCKS = [
